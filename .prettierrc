@@ -1,0 +1,7 @@
+{
+    "singleQuote": false,
+    "bracketSPacing": true,
+    "tabwidth": 2,
+    "trsilingComma": "es5",
+    "semi": true
+}
