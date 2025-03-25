@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import fs from "fs";
-import passport from "passport";
+// import passport from "passport";
 
 
 
@@ -209,33 +209,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 })
 
-//google auth
-//routes
-const googleAuth = asyncHandler(async (req, res, next) => {
-    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
-});
-const googleAuthCallback = asyncHandler(async (req, res) => {
-    try {
-        if (!req.user) {
-            console.log("User  in googleAuthCallback:", req.user);
-            throw new ApiError(401, "Authentication failed"); // Handle case where user is not found
-          }
-        // Successful authentication, generate tokens and return response
-        const { user, accessToken, refreshToken } = req.user; // This comes from the passport callback
-        const options = {
-            httpOnly: true,
-            secure: true
-        };
-    
-        return res.status(200)
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", refreshToken, options)
-            .json(new ApiResponse(200, { user }, "User  Logged in with Google Successfully"));
-    } catch (error) {
-        console.error("Error in googleAuthCallback:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-});
+
 
 
 export {
@@ -243,6 +217,5 @@ export {
     loginUser,
     logoutUser,
     refreshAccessToken,
-    googleAuth,
-    googleAuthCallback
+   
 };
