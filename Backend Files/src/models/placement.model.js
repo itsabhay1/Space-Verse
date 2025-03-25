@@ -1,16 +1,53 @@
 import mongoose, {Schema} from "mongoose";
 
 const ItemSchema = new Schema({
-        itemId: String,
-        name: String,
-        width: Number,
-        depth: Number,
-        height: Number,
-        priority: Number,
-        expiryDate: String,   
-        usageLimit: Number,
-        preferredZone: String ,
-        containerId: String,
+        itemId: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        name: {
+            type: String,
+            required: true,
+        },
+        width: {
+            type: Number,
+            required: true,
+        },
+        depth: {
+            type: Number,
+            required: true,
+        },
+        height: {
+            type: Number,
+            required: true,
+        },
+        mass: {
+            type: Number,
+            required: true,
+        },
+        priority: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 100,
+        },
+        expiryDate: {
+            type: Date,
+            default: null,
+        },   
+        usageLimit: {
+            type: Number,
+            default: null,
+        },
+        preferredZone: {
+            type: String,
+            required: true,
+        },
+        containerId: {
+            type: String,
+            default: null,
+        },
         position:{
             start :{
                 width:Number,
@@ -22,9 +59,13 @@ const ItemSchema = new Schema({
                 depth:Number,
                 height:Number
             }
-        }
+        },
+        status: {
+            type: String,
+            enum: ["stored","retreived","waste"],
+            default: "stored",
+        },
 
 });
 
-const Item = mongoose.model("Item", ItemSchema);
-export default Item;
+export const Item = mongoose.model("Item", ItemSchema);
