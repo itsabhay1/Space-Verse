@@ -2,14 +2,9 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-// import passport from "passport";
-// import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-// import { User } from "./models/user.model.js";
-// import { googleAuth, googleAuthCallback } from './controllers/user.controller.js';
 import userRouter from './routes/user.routes.js';
-// import bcrypt from "bcrypt";
-// import jwt from "jsonwebtoken";
 import session from "express-session";
+import placementRoutes from './routes/placement.routes.js';
 
 dotenv.config({
   path: "../.env",
@@ -39,6 +34,7 @@ app.use(session({
 
 
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/placement", placementRoutes);
 
 
 app.get('/', (req, res) => {
