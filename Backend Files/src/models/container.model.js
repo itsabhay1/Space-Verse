@@ -33,7 +33,12 @@ const containerSchema = new Schema({
     items: [{
         type: Schema.Types.ObjectId,
         ref: "Item",
-    }]
+    }],
+
+    occupiedSpaces: {
+     type: Array,
+     default: []
+     } 
 })
 
 export const Container = mongoose.model("Container", containerSchema)
