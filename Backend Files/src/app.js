@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import userRouter from './routes/user.routes.js';
 import session from "express-session";
-import placementRoutes from './routes/placement.routes.js';
+import placementRouter from './routes/placement.routes.js';
 
 dotenv.config({
   path: "../.env",
@@ -34,7 +34,7 @@ app.use(session({
 
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/placement", placementRoutes);
+app.use("/api/v1/placement", placementRouter);
 
 
 app.get('/', (req, res) => {
