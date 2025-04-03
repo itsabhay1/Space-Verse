@@ -1,3 +1,4 @@
+
 import { Container } from "../models/container.model.js";
 import { Item } from "../models/placement.model.js";
 import { findCoordinate } from "../utils/findCoordinates.js";
@@ -11,7 +12,7 @@ const placeOrRearrangeItem = async (req, res) => {
         let rearrangementSteps = [];
         let step = 1;
 
-        if (Array.isArray(containers) && containers.length > 0) {                 // Ensuring container is an aray
+        if (Array.isArray(containers) && containers.length > 0) { // Ensure containers is an array
             for (let containerData of containers) {
                 let container = await Container.findOne({ containerId: containerData.containerId });
 
@@ -35,14 +36,32 @@ const placeOrRearrangeItem = async (req, res) => {
                     return res.status(400).json({ success: false, message: `Item ID ${itemData.itemId} already exists!` });
                 }
 
-                let container = await Container.findOne({ zone: itemData.preferredZone }) || await Container.findOne();
+
+            let container = await Container.findOne({ containerId: req.body.containerId });
+
+if (!container) {
+    container = await Container.create({
+        containerId: req.body.containerId,
+        zone: req.body.zone,
+        width: req.body.width,
+        depth: req.body.depth,
+        height: req.body.height,
+        maxWeight: req.body.maxWeight,
+        currentWeight: req.body.currentWeight || 0,
+        occupiedSpaces: [],
+        items: []
+    });
+}
+
+
+
 
                 if (!container) {
                     return res.status(400).json({ success: false, message: "No containers available" });
                 }
 
-                console.log("placing item:", itemData);
-                
+                console.log("Placing item:", itemData);
+
                 let coordinates = findCoordinate(container, itemData);
 
                 if (!coordinates) {
@@ -60,8 +79,12 @@ const placeOrRearrangeItem = async (req, res) => {
                     position: coordinates
                 });
 
-                container.items.push(newItem._id);
-                await container.save();
+
+                await Container.updateOne(
+                    { containerId: container.containerId },
+                    { $push: { occupiedSpaces: { start: coordinates.start, end: coordinates.end } } }
+                );
+                
 
                 placementSteps.push({
                     action: "place",
@@ -83,7 +106,15 @@ const placeOrRearrangeItem = async (req, res) => {
 
         if (action === "remove") {
             await Item.deleteOne({ itemId });
-            await Container.updateOne({ containerId: fromContainer }, { $pull: { items: item._id } });
+
+            let sourceContainer = await Container.findOne({ containerId: fromContainer });
+            if (sourceContainer) {
+                sourceContainer.items.pull(item._id);
+                sourceContainer.occupiedSpaces = sourceContainer.occupiedSpaces.filter(
+                    (space) => space.start !== fromPosition.start && space.end !== fromPosition.end
+                ); //  Remove occupied space
+                await sourceContainer.save();
+            }
 
             rearrangementSteps.push({ step: step++, action: "remove", itemId, fromContainer, fromPosition });
 
@@ -107,9 +138,22 @@ const placeOrRearrangeItem = async (req, res) => {
                 return res.status(400).json({ success: false, message: "No space available in the target container" });
             }
 
-            await Item.updateOne({ itemId }, { containerId: toContainer, position: newPosition });
-            await Container.updateOne({ containerId: fromContainer }, { $pull: { items: item._id } });
-            await Container.updateOne({ containerId: toContainer }, { $push: { items: item._id } });
+           
+            await Item.updateOne(
+                { itemId: item.itemId },
+                { $set: { containerId: container.containerId, position: newPosition } }
+            );
+            
+
+            sourceContainer.items.pull(item._id);
+            sourceContainer.occupiedSpaces = sourceContainer.occupiedSpaces.filter(
+                (space) => space.start !== fromPosition.start && space.end !== fromPosition.end
+            ); //  Remove previous occupied space
+            await sourceContainer.save();
+
+            destinationContainer.items.push(item._id);
+            destinationContainer.occupiedSpaces.push({ start: newPosition.start, end: newPosition.end }); //  Add occupied space
+            await destinationContainer.save();
 
             rearrangementSteps.push({
                 step: step++,
@@ -137,8 +181,13 @@ const placeOrRearrangeItem = async (req, res) => {
                 return res.status(400).json({ success: false, message: "No space available" });
             }
 
-            await Item.updateOne({ itemId }, { containerId: container.containerId, position: newPosition });
-            await Container.updateOne({ containerId: container.containerId }, { $push: { items: item._id } });
+            item.containerId = container.containerId;
+            item.position = newPosition;
+            await item.save();
+
+            container.items.push(item._id);
+            container.occupiedSpaces.push({ start: newPosition.start, end: newPosition.end }); // Add occupied space
+            await container.save();
 
             rearrangementSteps.push({
                 step: step++,
